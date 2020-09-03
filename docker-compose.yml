@@ -1,0 +1,48 @@
+version: '3.6'
+
+services:
+
+  rest:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile_rest
+    container_name: rest
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+    env_file: ./docker/env.env
+    entrypoint: python
+    command:
+      - /code/run_rest.py
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    networks:
+        - docker-network
+
+
+  db:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile_db
+    container_name: db
+    ports:
+      - 3307:3306
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      - docker-network
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: billing
+    restart: unless-stopped
+    
+
+networks:
+ docker-network:
+   driver: bridge
+   name: docker-network
+   ipam:
+     config:
+     - subnet: 10.5.0.0/24
