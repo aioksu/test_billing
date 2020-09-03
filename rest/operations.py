@@ -1,4 +1,5 @@
 import aiomysql
+from datetime import datetime as dt
 from decimal import Decimal
 
 
@@ -85,11 +86,11 @@ async def transfer_money_from_wallet_to_wallet(conn, session_id, sender_wallet_i
             recipient_balance = recipient_balance + money
 
             data_to_update = [
-                (sender_wallet_id, sender_new_balance,),
-                (recipient_wallet_id, recipient_balance,),
+                (sender_wallet_id, sender_new_balance, str(dt.now())),
+                (recipient_wallet_id, recipient_balance, str(dt.now())),
             ]
 
-            await cursor.executemany('INSERT wallet (id, balance) VALUES (%s, %s) '
+            await cursor.executemany('INSERT INTO wallet (id, balance, creation_time) VALUES (%s, %s, %s) '
                                      'ON DUPLICATE KEY UPDATE balance = VALUES(balance)',
                                      data_to_update)
 
