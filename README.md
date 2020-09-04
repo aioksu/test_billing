@@ -20,3 +20,6 @@ sender - customer's wallet id who would send money
 
 recipient - customer's wallet id to whom would send money
 
+# Пояснения к проекту
+
+пояснения находятся в файле solution.txt
