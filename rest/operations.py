@@ -49,31 +49,26 @@ async def add_money_to_wallet(conn, session_id, wallet_id, money):
 
 async def transfer_money_from_wallet_to_wallet(conn, session_id, sender_wallet_id, recipient_wallet_id, money):
 
-    async with conn.cursor() as cursor:
+    async with conn.cursor(aiomysql.cursors.DictCursor) as cursor:
         try:
             await conn.begin()
 
-            await cursor.execute('SELECT balance FROM wallet '
-                                 'WHERE id = %s FOR UPDATE',
-                                 (sender_wallet_id))
+            await cursor.execute('SELECT * FROM wallet '
+                                 'WHERE id in (%s, %s) FOR UPDATE',
+                                 (sender_wallet_id, recipient_wallet_id))
 
-            sender_balance = await cursor.fetchone()
+            wallets = await cursor.fetchall()
 
-            await cursor.execute('SELECT balance FROM wallet '
-                                 'WHERE id = %s FOR UPDATE',
-                                 (recipient_wallet_id))
-
-            recipient_balance = await cursor.fetchone()
-
-            if sender_balance is None or recipient_balance is None:
-                await conn.commit()
-
+            if len(wallets) < 2:
                 return {
                     'error': f'wrong wallet_id'
                 }
 
-            sender_balance, recipient_balance = sender_balance[
-                0], recipient_balance[0]
+            sender_balance = wallets[0]['balance'] if sender_wallet_id == wallets[0]['id'] \
+                else wallets[1]['balance']
+
+            recipient_balance = wallets[0]['balance'] if recipient_wallet_id == wallets[0]['id'] \
+                else wallets[1]['balance']
 
             sender_new_balance = sender_balance - money
 
